@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablero de Seguimiento</title>
+<style>
+  :root {
+    --azul-oscuro: #0F2A3F;
+    --azul-medio: #1B4965;
+    --acento: #5FA8A0;
+    --gris-texto: #3B3F42;
+    --gris-claro: #F4F6F7;
+    --borde: #D8DEE1;
+    --azul-tarjeta-bg: #EAF2F8;
+    --azul-tarjeta-borde: #BFD7EA;
+    --verde-oscuro: #1E5631;
+    --verde-medio: #2E7D4F;
+    --verde-tarjeta-bg: #EAF7EE;
+    --verde-tarjeta-borde: #BFE3CC;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--gris-claro);
+    color: var(--gris-texto);
+    padding: 40px 24px 60px 24px;
+  }
+
+  header.tablero-header {
+    max-width: 860px;
+    margin: 0 auto 24px auto;
+    border-bottom: 3px solid var(--azul-oscuro);
+    padding-bottom: 16px;
+  }
+
+  header.tablero-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--azul-oscuro);
+  }
+
+  .ficha {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    border: 1px solid var(--borde);
+    border-left: 5px solid var(--acento);
+    border-radius: 4px;
+    padding: 28px 32px;
+  }
+
+  .ficha dl {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    row-gap: 18px;
+    column-gap: 20px;
+  }
+
+  .ficha dt {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--azul-medio);
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .ficha dd {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    .ficha dl {
+      grid-template-columns: 1fr;
+      row-gap: 4px;
+    }
+    .ficha dt {
+      padding-top: 12px;
+    }
+  }
+
+  section.indicadores {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.indicadores h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  .tarjetas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .tarjeta {
+    background: var(--azul-tarjeta-bg);
+    border: 1px solid var(--azul-tarjeta-borde);
+    border-top: 4px solid var(--azul-medio);
+    border-radius: 4px;
+    padding: 20px 18px;
+  }
+
+  .tarjeta h3 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--azul-medio);
+    margin-bottom: 10px;
+  }
+
+  .tarjeta .valor {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    line-height: 1.2;
+  }
+
+  @media (max-width: 700px) {
+    .tarjetas {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .tarjetas {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  section.cronograma {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.cronograma h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  table.cronograma-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: #FFFFFF;
+    border: 1px solid var(--borde);
+  }
+
+  table.cronograma-tabla th,
+  table.cronograma-tabla td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--borde);
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  table.cronograma-tabla th {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #FFFFFF;
+    background: var(--azul-medio);
+  }
+
+  table.cronograma-tabla tr:last-child td {
+    border-bottom: none;
+  }
+
+  table.cronograma-tabla td:nth-child(2) {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    table.cronograma-tabla {
+      font-size: 0.85rem;
+    }
+    table.cronograma-tabla th,
+    table.cronograma-tabla td {
+      padding: 10px;
+    }
+  }
+
+  .filtro-estado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .filtro-estado button {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--azul-medio);
+    background: #FFFFFF;
+    border: 1px solid var(--azul-medio);
+    border-radius: 20px;
+    padding: 7px 16px;
+    cursor: pointer;
+  }
+
+  .filtro-estado button:hover {
+    background: var(--azul-tarjeta-bg);
+  }
+
+  .filtro-estado button.activo {
+    background: var(--azul-medio);
+    color: #FFFFFF;
+  }
+
+  table.cronograma-tabla tr.fila-oculta {
+    display: none;
+  }
+
+  .fila-barra.fila-oculta {
+    display: none;
+  }
+
+  section.avance-fisico {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.avance-fisico h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  .grafico-barras {
+    background: #FFFFFF;
+    border: 1px solid var(--borde);
+    border-radius: 4px;
+    padding: 24px 28px;
+  }
+
+  .fila-barra {
+    display: grid;
+    grid-template-columns: 190px 1fr 48px;
+    align-items: center;
+    column-gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .fila-barra:last-child {
+    margin-bottom: 0;
+  }
+
+  .fila-barra .etiqueta {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.82rem;
+    color: var(--gris-texto);
+  }
+
+  .fila-barra .pista {
+    background: var(--gris-claro);
+    border: 1px solid var(--borde);
+    border-radius: 3px;
+    height: 18px;
+    overflow: hidden;
+  }
+
+  .fila-barra .barra {
+    height: 100%;
+    background: var(--acento);
+    border-radius: 2px 0 0 2px;
+  }
+
+  .fila-barra .porcentaje {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    text-align: right;
+  }
+
+  @media (max-width: 600px) {
+    .fila-barra {
+      grid-template-columns: 120px 1fr 40px;
+    }
+    .fila-barra .etiqueta {
+      font-size: 0.75rem;
+    }
+  }
+
+  section.estado-financiero {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.estado-financiero h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  .tarjetas-financieras {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 700px) {
+    .tarjetas-financieras {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .tarjetas-financieras {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  section.indicadores-resultado {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.indicadores-resultado h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  .tarjetas-resultado {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .tarjeta-resultado {
+    background: var(--verde-tarjeta-bg);
+    border: 1px solid var(--verde-tarjeta-borde);
+    border-top: 4px solid var(--verde-medio);
+    border-radius: 4px;
+    padding: 20px 18px;
+  }
+
+  .tarjeta-resultado h3 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--verde-medio);
+    margin-bottom: 14px;
+  }
+
+  .tarjeta-resultado dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    row-gap: 8px;
+    column-gap: 10px;
+  }
+
+  .tarjeta-resultado dt {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.78rem;
+    color: var(--gris-texto);
+    align-self: center;
+  }
+
+  .tarjeta-resultado dd {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--verde-oscuro);
+    text-align: right;
+  }
+
+  @media (max-width: 700px) {
+    .tarjetas-resultado {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  section.cumplimiento-resultado {
+    max-width: 860px;
+    margin: 40px auto;
+  }
+
+  section.cumplimiento-resultado h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 16px;
+  }
+
+  .filtro-indicador {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .filtro-indicador button {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--verde-medio);
+    background: #FFFFFF;
+    border: 1px solid var(--verde-medio);
+    border-radius: 20px;
+    padding: 7px 16px;
+    cursor: pointer;
+  }
+
+  .filtro-indicador button:hover {
+    background: var(--verde-tarjeta-bg);
+  }
+
+  .filtro-indicador button.activo {
+    background: var(--verde-medio);
+    color: #FFFFFF;
+  }
+
+  .panel-cumplimiento {
+    background: #FFFFFF;
+    border: 1px solid var(--verde-tarjeta-borde);
+    border-radius: 4px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .dona {
+    --pct: 0;
+    width: 170px;
+    height: 170px;
+    min-width: 170px;
+    border-radius: 50%;
+    background: conic-gradient(var(--verde-medio) calc(var(--pct) * 1%), var(--gris-claro) 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .dona::before {
+    content: "";
+    position: absolute;
+    width: 122px;
+    height: 122px;
+    background: #FFFFFF;
+    border-radius: 50%;
+  }
+
+  .dona-valor {
+    position: relative;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--verde-oscuro);
+  }
+
+  .detalle-cumplimiento h3 {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    margin-bottom: 10px;
+  }
+
+  .detalle-cumplimiento dl {
+    display: grid;
+    grid-template-columns: auto auto;
+    row-gap: 6px;
+    column-gap: 10px;
+  }
+
+  .detalle-cumplimiento dt {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.8rem;
+    color: var(--gris-texto);
+  }
+
+  .detalle-cumplimiento dd {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+  }
+
+  @media (max-width: 500px) {
+    .panel-cumplimiento {
+      justify-content: center;
+      text-align: center;
+    }
+    .detalle-cumplimiento dl {
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <header class="tablero-header">
+    <h1>Tablero de Seguimiento</h1>
+  </header>
+
+  <section class="ficha">
+    <dl>
+      <dt>Nombre del proyecto</dt>
+      <dd>Mejoramiento del Servicio de Acueducto en la Zona Rural del Municipio de Villa de Leyva</dd>
+
+      <dt>Localización</dt>
+      <dd>Veredas El Roble, Sáquima, Capilla, Cardonal y Llano Blanco — Municipio de Villa de Leyva, Boyacá</dd>
+
+      <dt>Entidad ejecutora</dt>
+      <dd>Alcaldía Municipal de Villa de Leyva — Secretaría de Planeación e Infraestructura</dd>
+
+      <dt>Fecha de corte</dt>
+      <dd>11 de agosto de 2026</dd>
+    </dl>
+  </section>
+
+  <section class="indicadores">
+    <h2>Indicadores clave</h2>
+    <div class="tarjetas">
+      <div class="tarjeta">
+        <h3>Tiempo transcurrido</h3>
+        <div class="valor">283 de 456 días (62%)</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Ejecución presupuestal</h3>
+        <div class="valor">27%</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Cumplimiento del cronograma</h3>
+        <div class="valor">33%</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Cobertura de acueducto</h3>
+        <div class="valor">≈56% (meta 95%)</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cronograma">
+    <h2>Cronograma de actividades</h2>
+    <div class="filtro-estado" role="group" aria-label="Filtrar actividades por estado">
+      <button type="button" class="activo" data-filtro="todas">Todas</button>
+      <button type="button" data-filtro="completada">Completada</button>
+      <button type="button" data-filtro="en-ejecucion">En ejecución</button>
+      <button type="button" data-filtro="recien-iniciada">Recién iniciada</button>
+      <button type="button" data-filtro="no-iniciado">No ha iniciado</button>
+    </div>
+    <table class="cronograma-tabla" id="tabla-cronograma">
+      <thead>
+        <tr>
+          <th>Actividad</th>
+          <th>Ventana planeada</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-estado="completada">
+          <td>Diagnosticar tramos de red existente</td>
+          <td>01/11/2025 – 30/11/2025</td>
+          <td>Completada</td>
+        </tr>
+        <tr data-estado="completada">
+          <td>Diseñar la ampliación de la red</td>
+          <td>01/12/2025 – 28/02/2026</td>
+          <td>Completada</td>
+        </tr>
+        <tr data-estado="completada">
+          <td>Adelantar contratación y adquisición de materiales</td>
+          <td>01/03/2026 – 31/05/2026</td>
+          <td>Completada, con 10 días de retraso frente a lo planeado por disponibilidad de proveedor</td>
+        </tr>
+        <tr data-estado="en-ejecucion">
+          <td>Ejecutar la ampliación de la red</td>
+          <td>01/06/2026 – 31/12/2026</td>
+          <td>En ejecución — 4,08 de 12 km (34%)</td>
+        </tr>
+        <tr data-estado="en-ejecucion">
+          <td>Ejecutar la rehabilitación de tramos</td>
+          <td>01/06/2026 – 31/10/2026</td>
+          <td>En ejecución — 2,82 de 6 km (47%)</td>
+        </tr>
+        <tr data-estado="recien-iniciada">
+          <td>Instalar acometidas y medidores</td>
+          <td>01/08/2026 – 31/01/2027</td>
+          <td>Recién iniciada — 37 de 620 conexiones (6%)</td>
+        </tr>
+        <tr data-estado="recien-iniciada">
+          <td>Legalizar usuarios</td>
+          <td>01/08/2026 – 31/01/2027</td>
+          <td>Recién iniciada — 37 de 620 usuarios (6%)</td>
+        </tr>
+        <tr data-estado="no-iniciado">
+          <td>Instalar puntos de monitoreo</td>
+          <td>01/12/2026 – 31/12/2026</td>
+          <td>No ha iniciado</td>
+        </tr>
+        <tr data-estado="no-iniciado">
+          <td>Seguimiento a la calidad del agua</td>
+          <td>01/01/2027 – 31/01/2027</td>
+          <td>No ha iniciado</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="avance-fisico">
+    <h2>Avance físico por actividad</h2>
+    <div class="grafico-barras" id="grafico-avance">
+      <div class="fila-barra" data-estado="completada">
+        <span class="etiqueta">Diagnóstico de red</span>
+        <div class="pista"><div class="barra" style="width: 100%;"></div></div>
+        <span class="porcentaje">100%</span>
+      </div>
+      <div class="fila-barra" data-estado="completada">
+        <span class="etiqueta">Diseño de ampliación</span>
+        <div class="pista"><div class="barra" style="width: 100%;"></div></div>
+        <span class="porcentaje">100%</span>
+      </div>
+      <div class="fila-barra" data-estado="completada">
+        <span class="etiqueta">Contratación y materiales</span>
+        <div class="pista"><div class="barra" style="width: 100%;"></div></div>
+        <span class="porcentaje">100%</span>
+      </div>
+      <div class="fila-barra" data-estado="en-ejecucion">
+        <span class="etiqueta">Ampliación de red</span>
+        <div class="pista"><div class="barra" style="width: 34%;"></div></div>
+        <span class="porcentaje">34%</span>
+      </div>
+      <div class="fila-barra" data-estado="en-ejecucion">
+        <span class="etiqueta">Rehabilitación de tramos</span>
+        <div class="pista"><div class="barra" style="width: 47%;"></div></div>
+        <span class="porcentaje">47%</span>
+      </div>
+      <div class="fila-barra" data-estado="recien-iniciada">
+        <span class="etiqueta">Acometidas y medidores</span>
+        <div class="pista"><div class="barra" style="width: 6%;"></div></div>
+        <span class="porcentaje">6%</span>
+      </div>
+      <div class="fila-barra" data-estado="recien-iniciada">
+        <span class="etiqueta">Legalización de usuarios</span>
+        <div class="pista"><div class="barra" style="width: 6%;"></div></div>
+        <span class="porcentaje">6%</span>
+      </div>
+      <div class="fila-barra" data-estado="no-iniciado">
+        <span class="etiqueta">Puntos de monitoreo</span>
+        <div class="pista"><div class="barra" style="width: 0%;"></div></div>
+        <span class="porcentaje">0%</span>
+      </div>
+      <div class="fila-barra" data-estado="no-iniciado">
+        <span class="etiqueta">Calidad del agua</span>
+        <div class="pista"><div class="barra" style="width: 0%;"></div></div>
+        <span class="porcentaje">0%</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="estado-financiero">
+    <h2>Estado financiero</h2>
+    <div class="tarjetas-financieras">
+      <div class="tarjeta">
+        <h3>Presupuesto total</h3>
+        <div class="valor">$950.000.000 (100%)</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Comprometido</h3>
+        <div class="valor">$885.000.000 (93%)</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Ejecutado</h3>
+        <div class="valor">$255.966.129 (27%)</div>
+      </div>
+      <div class="tarjeta">
+        <h3>Ejecutado sobre comprometido</h3>
+        <div class="valor">28,9%</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="indicadores-resultado">
+    <h2>Indicadores de resultado</h2>
+    <div class="tarjetas-resultado">
+      <div class="tarjeta-resultado">
+        <h3>Cobertura de acueducto</h3>
+        <dl>
+          <dt>Línea base</dt>
+          <dd>54%</dd>
+          <dt>Valor al corte</dt>
+          <dd>≈56%</dd>
+          <dt>Meta</dt>
+          <dd>95%</dd>
+        </dl>
+      </div>
+      <div class="tarjeta-resultado">
+        <h3>Continuidad del servicio</h3>
+        <dl>
+          <dt>Línea base</dt>
+          <dd>9 h/día</dd>
+          <dt>Valor al corte</dt>
+          <dd>≈10,5 h/día</dd>
+          <dt>Meta</dt>
+          <dd>20 h/día</dd>
+        </dl>
+      </div>
+      <div class="tarjeta-resultado">
+        <h3>Índice de Agua No Contabilizada (IANC)</h3>
+        <dl>
+          <dt>Línea base</dt>
+          <dd>42%</dd>
+          <dt>Valor al corte</dt>
+          <dd>≈39%</dd>
+          <dt>Meta</dt>
+          <dd>25%</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="cumplimiento-resultado">
+    <h2>Cumplimiento de indicadores de resultado</h2>
+    <div class="filtro-indicador" role="group" aria-label="Seleccionar indicador de resultado">
+      <button type="button" class="activo" data-indicador="cobertura">Cobertura de acueducto</button>
+      <button type="button" data-indicador="continuidad">Continuidad del servicio</button>
+      <button type="button" data-indicador="ianc">IANC</button>
+    </div>
+    <div class="panel-cumplimiento">
+      <div class="dona" id="dona-cumplimiento" style="--pct: 4.9;">
+        <span class="dona-valor" id="dona-valor">4,9%</span>
+      </div>
+      <div class="detalle-cumplimiento" id="detalle-cumplimiento">
+        <h3 id="detalle-titulo">Cobertura de acueducto</h3>
+        <dl>
+          <dt>Línea base</dt>
+          <dd id="detalle-base">54%</dd>
+          <dt>Valor al corte</dt>
+          <dd id="detalle-actual">≈56%</dd>
+          <dt>Meta</dt>
+          <dd id="detalle-meta">95%</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      var datosIndicadores = {
+        cobertura: {
+          titulo: 'Cobertura de acueducto',
+          base: '54%',
+          actual: '≈56%',
+          meta: '95%',
+          cumplimiento: 4.9
+        },
+        continuidad: {
+          titulo: 'Continuidad del servicio',
+          base: '9 h/día',
+          actual: '≈10,5 h/día',
+          meta: '20 h/día',
+          cumplimiento: 13.6
+        },
+        ianc: {
+          titulo: 'Índice de Agua No Contabilizada (IANC)',
+          base: '42%',
+          actual: '≈39%',
+          meta: '25%',
+          cumplimiento: 17.6
+        }
+      };
+
+      var botonesIndicador = document.querySelectorAll('.filtro-indicador button');
+      var dona = document.getElementById('dona-cumplimiento');
+      var donaValor = document.getElementById('dona-valor');
+      var detalleTitulo = document.getElementById('detalle-titulo');
+      var detalleBase = document.getElementById('detalle-base');
+      var detalleActual = document.getElementById('detalle-actual');
+      var detalleMeta = document.getElementById('detalle-meta');
+
+      botonesIndicador.forEach(function (boton) {
+        boton.addEventListener('click', function () {
+          botonesIndicador.forEach(function (b) { b.classList.remove('activo'); });
+          boton.classList.add('activo');
+
+          var datos = datosIndicadores[boton.getAttribute('data-indicador')];
+
+          dona.style.setProperty('--pct', datos.cumplimiento);
+          donaValor.textContent = String(datos.cumplimiento).replace('.', ',') + '%';
+          detalleTitulo.textContent = datos.titulo;
+          detalleBase.textContent = datos.base;
+          detalleActual.textContent = datos.actual;
+          detalleMeta.textContent = datos.meta;
+        });
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      var botones = document.querySelectorAll('.filtro-estado button');
+      var filasTabla = document.querySelectorAll('#tabla-cronograma tbody tr');
+      var barras = document.querySelectorAll('#grafico-avance .fila-barra');
+
+      botones.forEach(function (boton) {
+        boton.addEventListener('click', function () {
+          botones.forEach(function (b) { b.classList.remove('activo'); });
+          boton.classList.add('activo');
+
+          var filtro = boton.getAttribute('data-filtro');
+
+          function aplicarFiltro(elemento) {
+            if (filtro === 'todas' || elemento.getAttribute('data-estado') === filtro) {
+              elemento.classList.remove('fila-oculta');
+            } else {
+              elemento.classList.add('fila-oculta');
+            }
+          }
+
+          filasTabla.forEach(aplicarFiltro);
+          barras.forEach(aplicarFiltro);
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>
